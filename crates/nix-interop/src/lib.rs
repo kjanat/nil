@@ -88,7 +88,7 @@ mod tests {
 
     use super::FlakeUrl;
 
-    fn scratch_dir(name: &str) -> std::path::PathBuf {
+    pub(crate) fn scratch_dir(name: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("nil-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
