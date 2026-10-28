@@ -1,5 +1,6 @@
 [files]
 extend-exclude = [
+    "crates/builtin/snapshot.json",
     "crates/syntax/test_data",
 ]
 

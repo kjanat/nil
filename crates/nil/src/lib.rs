@@ -8,11 +8,10 @@ mod semantic_tokens;
 mod server;
 mod vfs;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use async_lsp::client_monitor::ClientProcessMonitorLayer;
 use async_lsp::concurrency::ConcurrencyLayer;
 use async_lsp::server::LifecycleLayer;
-use async_lsp::stdio::{PipeStdin, PipeStdout};
 use async_lsp::tracing::TracingLayer;
 use ide::VfsPath;
 use lsp_types::Url;
@@ -72,8 +71,21 @@ pub async fn run_server_stdio() -> Result<()> {
 
     let init_messages = Vec::new();
 
-    let stdin = PipeStdin::lock_tokio().context("stdin is not pipe-like")?;
-    let stdout = PipeStdout::lock_tokio().context("stdout is not pipe-like")?;
+    #[cfg(unix)]
+    let (stdin, stdout) = {
+        use anyhow::Context;
+        (
+            async_lsp::stdio::PipeStdin::lock_tokio().context("stdin is not pipe-like")?,
+            async_lsp::stdio::PipeStdout::lock_tokio().context("stdout is not pipe-like")?,
+        )
+    };
+    // `PipeStdin`/`PipeStdout` need non-blocking Unix fds. Elsewhere, fall back to
+    // tokio's stdio, which does blocking I/O on a background thread.
+    #[cfg(not(unix))]
+    let (stdin, stdout) = (
+        tokio_util::compat::TokioAsyncReadCompatExt::compat(tokio::io::stdin()),
+        tokio_util::compat::TokioAsyncWriteCompatExt::compat_write(tokio::io::stdout()),
+    );
 
     let (mainloop, _) = async_lsp::MainLoop::new_server(|client| {
         ServiceBuilder::new()

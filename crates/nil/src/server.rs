@@ -138,8 +138,11 @@ impl Server {
             host: AnalysisHost::default(),
             vfs: Arc::new(RwLock::new(Vfs::new())),
             opened_files: HashMap::default(),
-            // Will be set during initialization.
+            // Will be set during initialization. Must be absolute on the host platform.
+            #[cfg(not(windows))]
             config: Arc::new(Config::new("/non-existing-path".into())),
+            #[cfg(windows)]
+            config: Arc::new(Config::new(r"C:\non-existing-path".into())),
             tried_flake_load: false,
             workspace_is_flake: false,
             diagnostic_version: 0,

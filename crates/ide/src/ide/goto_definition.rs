@@ -160,7 +160,13 @@ mod tests {
         let (db, f) = TestDB::from_fixture(fixture).unwrap();
         assert_eq!(f.markers().len(), 1, "Missing markers");
         let mut got = match goto_definition(&db, f[0]).expect("No definition") {
-            GotoDefinitionResult::Path(path) => format!("file://{}", path.display()),
+            // Fixtures use `/`, but `join` inserts the host separator.
+            GotoDefinitionResult::Path(path) => format!(
+                "file://{}",
+                path.display()
+                    .to_string()
+                    .replace(std::path::MAIN_SEPARATOR, "/"),
+            ),
             GotoDefinitionResult::Targets(targets) => {
                 assert!(!targets.is_empty());
                 targets

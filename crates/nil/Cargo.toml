@@ -41,5 +41,8 @@ features = [
 [target.'cfg(unix)'.dependencies]
 rustix = { version = "1", default-features = false, features = ["fs", "std"] }
 
+[target.'cfg(not(unix))'.dependencies]
+tokio-util = { version = "0.7", features = ["compat"] }
+
 [lints]
 workspace = true
